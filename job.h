@@ -23,6 +23,7 @@ void doFg(Argument a);
 void initJob();
 void printJobList();
 void jobsNewNode(pid_t *pidList, char *command);
-Jobs* jobsDelNode(int jobID);
+void jobsDelNode(int jobID);
+int findJob(int jobID);
 
 #endif

@@ -2,47 +2,22 @@
 
 // job list
 Jobs *head;
-Jobs *job;
 int jobCount;
 
-void doFg(Argument a) {
-    if(a.argc == 2){
-        int jobID, i;
-        Jobs *temp;
-        sscanf(a.argv[1], "%d", &jobID);
-        temp=jobsDelNode(jobID);
-        if (temp!=NULL) {
-            int status;
-            kill(temp->pidList[0], SIGCONT);
-            //setSignal(1);
-            waitpid(temp->pidList[0],&status,WUNTRACED);
-            if (WIFSTOPPED(status)) {
-                jobsNewNode(temp->pidList, temp->cmd);
-                printf("\n");
-            }
-        } else {
-            printf("fg: no such job\n");
-        }
-    }
-    else{
-        printf("fg: wrong number of arguments - %d\n", a.argc);
-    }
-}
-
 void initJob(){
-    head=(Jobs *) malloc(sizeof(Jobs));
+    //head=(Jobs *) malloc(sizeof(Jobs));
     head = NULL;
     jobCount = 0;
 }
 
 void printJobList(){
     int count=0;
-	Jobs *temp;
+    Jobs *temp;
 
     temp = head;
     if (temp==NULL) {
         printf("No suspended jobs\n");
-    }
+    }   
     while(temp!=NULL){
         printf("[%d] %s\n", ++count, temp->cmd);
         temp = temp->next;
@@ -55,57 +30,87 @@ void jobsNewNode(pid_t *pidList, char *command){
     char *cmd = command;
 
     jobCount++;
-    job = (Jobs *) malloc(sizeof(Jobs));
-    strcpy(job->cmd,cmd);
-    job->pidList= pidList;
-    job->next = NULL;
+    Jobs *newJob = malloc(sizeof(Jobs));
+    strcpy(newJob->cmd,cmd);
+    newJob->pidList= pidList;
+    newJob->next = NULL;
     //printf("%d\n", job->pidList);
 
     if(head == NULL){
-        head = job;
+        head = newJob;
         //printf("%d", head->pidList);
     }else if(head != NULL) {
         Jobs* temp;
         for(temp = head;temp->next != NULL;temp=temp->next);
-        temp->next = job;
+        temp->next = newJob;
     }
 }
 
-Jobs* jobsDelNode(int jobID) {
+void jobsDelNode(int jobID) {
     int i;
-    Jobs* returnJob = NULL;
+    if (jobID == 1) {
+        if (jobCount > 1) {
+            Jobs* temp = head;
+            head = head->next;
+            //free(head->pidList);
+            //free(temp);
+        } else {
+            //initJob();
+            Jobs* temp = head;
+            head = NULL;
+            //free(head->pidList);
+            //free(temp);
+        }
+    } else {
+        Jobs* temp = head;
+        Jobs* delPtr = NULL;
+        for (i=1;temp!=NULL && i!=jobID-1;i++,temp=temp->next);
+        if (jobID < jobCount) { // delete middle note
+            delPtr = temp->next;
+            temp->next = temp->next->next;
+            // free(delPtr->pidList);
+            // free(delPtr);
+        } else { // delete tail
+            delPtr = temp->next;
+            temp->next = NULL;
+            // free(delPtr->pidList);
+            // free(delPtr);
+        }
+        // free(delPtr->pidList);
+        // free(delPtr);
+    }
+}
+
+int findJob(int jobID) {
     if (jobID <= jobCount && jobID > 0) {
-        if (jobID == 1) {
-            if (jobCount > 1) {
-                Jobs* newHead = head->next;
-                memcpy(&returnJob, &head, sizeof(head));
-                free(head->pidList);
-                free(head);
-                head = newHead;
-            } else {
-                // memcpy(returnJob, head, sizeof());
-                // free(head->pidList);
-                // free(head);
-                returnJob = head;
-                head = NULL;
+        return 1; // job exist
+    }
+    return 0;
+}
+
+void doFg(Argument a) {
+    if(a.argc == 2){
+        int jobID, i;
+        Jobs *temp = head;  
+        sscanf(a.argv[1], "%d", &jobID);
+        if (findJob(jobID) == 1) {
+            for (i=0;i!=jobID-1;i++,temp=temp->next); //point to target job
+            int status;
+            printf("Job wake up:  %s\n", temp->cmd);
+            //printf("----%d-----\n", temp->pidList[0]);
+            kill(temp->pidList[0], SIGCONT);
+            //setSignal(1);
+            waitpid(temp->pidList[0],&status,WUNTRACED);
+            if (!WIFSTOPPED(status)) {
+                printf("\nDelele JOB!!\n");
+                jobsDelNode(jobID);
+                jobCount--;
             }
         } else {
-            Jobs* temp = head;
-            for (i=0;temp!=NULL && i!=jobID-1;i++,temp=temp->next);
-            if (temp->next!=NULL) { // delete middle note
-                Jobs* delPtr = temp->next;
-                temp->next = temp->next->next;
-                memcpy(&returnJob, &delPtr, sizeof(head));
-                free(delPtr->pidList);
-                free(delPtr);
-            } else { // delete tail
-                Jobs* delPtr = temp->next;
-                temp->next = NULL;
-                memcpy(&returnJob, &delPtr, sizeof(head));
-                free(delPtr->pidList);
-                free(delPtr);
-            }
+            printf("fg: no such job\n");
         }
     }
-    return returnJob;
+    else{
+        printf("fg: wrong number of arguments\n");
+    }
 }
