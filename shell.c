@@ -38,7 +38,7 @@ int main(int argc, char *argv[]){
 		if(c.commandc == 1 && isBuildinCommand(c.commandv[0]))
 			runBuildinCommands(c.commandv[0]);
 		else{
-			wildcast(c);
+			//wildcast(c);
 			runPipeCommand(c);
 		}
 

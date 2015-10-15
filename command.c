@@ -222,7 +222,7 @@ Argument tokenizeArguments(char *input){
 	return *a;
 }
 
-
+/*
 void wildcast(Command c){
 	int i, matchCount = 0, j, k;
 
@@ -238,7 +238,9 @@ void wildcast(Command c){
 			matchCount = globBuffer.gl_pathc;
 		}
 
-	//	c.commandv[i].argv = (char**)realloc(c.commandv[i].argv, sizeof(char*) * matchCount);
+		free(c.commandv[i].argv);
+
+		c.commandv[i].argv = (char**)malloc(sizeof(char*) * (matchCount+1));
 
 		for(k = 0; k < matchCount; k++){
 			a.argv[k] = (char*)malloc(sizeof(char)*strlen(globBuffer.gl_pathv[k]));
@@ -260,13 +262,13 @@ void wildcast(Command c){
 
 		printf("%d\n", a.argc);
 
-		//memcpy(a.argv, c.commandv[i].argv, sizeof(char*) * (matchCount+1));
+		memcpy(a.argv, c.commandv[i].argv, sizeof(char*) * (matchCount+1));
 
 		globfree(&globBuffer);
 	}
 
 }
-
+*/
 void suspendProcesses(pid_t *pidList, int count){
 	int j;
 	for(j=0; j<count; j++)
@@ -286,8 +288,20 @@ void runPipeCommand(Command c){
 
 	for(i=0; i<c.commandc; i++){
 		Argument a = c.commandv[i];
+		glob_t globBuffer;
+		int matchCount=0;
 		char **temp = malloc(sizeof(char*) * (a.argc + 1));
 		memcpy(temp, a.argv, (a.argc + 1)*sizeof(char*));
+
+
+		for(j = 0; j < a.argc; j++){
+			char *newArgv = a.argv[j];
+			if(matchCount == 0)
+				glob(newArgv, GLOB_NOCHECK, NULL , &globBuffer );
+			else
+				glob(newArgv, GLOB_NOCHECK|GLOB_APPEND, NULL , &globBuffer );
+			matchCount = globBuffer.gl_pathc;
+		}
 
 		pidList[i] = childPid;
 		if(!(childPid = fork())){ // child
@@ -299,7 +313,7 @@ void runPipeCommand(Command c){
 				dup2(fd[1], 1);
 			close(fd[0]);
 
-			if(execvp(*temp, temp)){
+			if(execvp(*globBuffer.gl_pathv, globBuffer.gl_pathv)){
 				if(errno == -2){
 					printf("%s: No such command or program\n", temp[0]);
 				}
@@ -308,6 +322,7 @@ void runPipeCommand(Command c){
 				}
 				exit(0);
 			}
+			globfree(&globBuffer);
 		}
 		else{ // parent
 			int status;
