@@ -56,7 +56,11 @@ void doCd(Argument a){
 
 void doExit(Argument a){
 	if(a.argc == 1){
-		exit(0);
+		if (returnJobCount() > 0) {
+			printf("There is at least one suspended job\n");
+		} else {
+			exit(0);
+		}
 	}
 	else
 		printf("exit: wrong number of arguments\n");

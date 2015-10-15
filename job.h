@@ -25,5 +25,6 @@ void printJobList();
 void jobsNewNode(pid_t *pidList, char *command);
 void jobsDelNode(int jobID);
 int findJob(int jobID);
+int returnJobCount();
 
 #endif

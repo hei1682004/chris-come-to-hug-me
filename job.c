@@ -98,14 +98,32 @@ void doFg(Argument a) {
             int status;
             printf("Job wake up:  %s\n", temp->cmd);
             //printf("----%d-----\n", temp->pidList[0]);
-            kill(temp->pidList[0], SIGCONT);
-            //setSignal(1);
-            waitpid(temp->pidList[0],&status,WUNTRACED);
-            if (!WIFSTOPPED(status)) {
-                printf("\nDelele JOB!!\n");
-                jobsDelNode(jobID);
-                jobCount--;
-            }
+            int pidListSize = sizeof(temp->pidList)/sizeof(temp->pidList[0]); //get pidlist size
+            printf("\npid list size : %d\n", pidListSize);
+            if (pidListSize > 1) { // with pipe
+                //wake all process
+                for (i=0;i<pidListSize;i++) {
+                    kill(temp->pidList[i], SIGCONT);
+                }
+                //wait all process
+                for (i=0;i<pidListSize;i++) {
+                    waitpid(temp->pidList[i],&status,WUNTRACED);
+                    // if (!WIFSTOPPED(status)) {
+                    //     printf("\nDelele JOB!!\n");
+                    //     jobsDelNode(jobID);
+                    //     jobCount--;
+                    // }
+                }
+            } else { // without pipe
+                kill(temp->pidList[0], SIGCONT);
+                //setSignal(1);
+                waitpid(temp->pidList[0],&status,WUNTRACED);
+                if (!WIFSTOPPED(status)) {
+                    printf("\nDelele JOB!!\n");
+                    jobsDelNode(jobID);
+                    jobCount--;
+                }
+            }    
         } else {
             printf("fg: no such job\n");
         }
@@ -113,4 +131,8 @@ void doFg(Argument a) {
     else{
         printf("fg: wrong number of arguments\n");
     }
+}
+
+int returnJobCount() {
+    return jobCount;
 }
