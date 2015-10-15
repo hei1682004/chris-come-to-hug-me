@@ -23,7 +23,7 @@ int main(int argc, char *argv[]){
 	initJob();
 
 	while(1){
-		//setSignal(0);
+		setSignal(0);
 		char* inputBuffer = (char *) malloc(sizeof(char) * INPUT_BUFFER_SIZE);
 		printf("[3150 shell:%s]$ ", getCurrentDir());
 		fgets(inputBuffer, INPUT_BUFFER_SIZE, stdin);
