@@ -221,10 +221,9 @@ void wildcast(Command c){
 			matchCount = globBuffer.gl_pathc;
 		}
 
+	//	c.commandv[i].argv = (char**)realloc(c.commandv[i].argv, sizeof(char*) * matchCount);
+
 		for(k = 0; k < matchCount; k++){
-
-
-
 			a.argv[k] = (char*)malloc(sizeof(char)*strlen(globBuffer.gl_pathv[k]));
 			memcpy(a.argv[k], globBuffer.gl_pathv[k], sizeof(char)*strlen(globBuffer.gl_pathv[k]));
 
@@ -235,9 +234,16 @@ void wildcast(Command c){
 			//a.argv[k][strlen(a.argv[k])-1] = '\0';
 		}
 
+
+
 		a.argv[matchCount] = NULL;
 
 		a.argc = matchCount;
+		c.commandv[i].argc = matchCount;
+
+		printf("%d\n", a.argc);
+
+		//memcpy(a.argv, c.commandv[i].argv, sizeof(char*) * (matchCount+1));
 
 		globfree(&globBuffer);
 	}
@@ -258,6 +264,8 @@ void runPipeCommand(Command c){
 	pid_t *pidList = (pid_t *) malloc(sizeof(pid_t) * c.commandc);
 
 	pipe(fd);
+
+	printCommand(c);
 
 	for(i=0; i<c.commandc; i++){
 		Argument a = c.commandv[i];
