@@ -274,7 +274,7 @@ void runPipeCommand(Command c){
 				printf("%s\n", temp[j]);
 			}
 
-			if(execvp(temp, *temp)){
+			if(execvp(*temp, temp)){
 				if(errno == -2){
 					printf("%s: No such command or program\n", temp[0]);
 				}
