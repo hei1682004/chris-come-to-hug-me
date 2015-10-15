@@ -88,7 +88,9 @@ int findJob(int jobID) {
     return 0;
 }
 
-void doFg(Argument a) {
+void doFg(Argument a, int FGorBG) {
+    // FGorBG
+    // FG = 0 , BG = 1
     if(a.argc == 2){
         int jobID, i;
         Jobs *temp = head;  
@@ -101,18 +103,29 @@ void doFg(Argument a) {
             int pidListSize = sizeof(temp->pidList)/sizeof(temp->pidList[0]); //get pidlist size
             printf("\npid list size : %d\n", pidListSize);
             if (pidListSize > 1) { // with pipe
-                //wake all process
-                for (i=0;i<pidListSize;i++) {
-                    kill(temp->pidList[i], SIGCONT);
-                }
-                //wait all process
-                for (i=0;i<pidListSize;i++) {
-                    waitpid(temp->pidList[i],&status,WUNTRACED);
-                    // if (!WIFSTOPPED(status)) {
-                    //     printf("\nDelele JOB!!\n");
-                    //     jobsDelNode(jobID);
-                    //     jobCount--;
-                    // }
+                if (temp->pidList[1] == 0) {
+                     //wake all process
+                    for (i=0;i<pidListSize;i++) {
+                        kill(temp->pidList[i], SIGCONT);
+                    }
+                    //wait all process
+                    for (i=0;i<pidListSize;i++) {
+                        waitpid(temp->pidList[i],&status,WUNTRACED);
+                        // if (!WIFSTOPPED(status)) {
+                        //     printf("\nDelele JOB!!\n");
+                        //     jobsDelNode(jobID);
+                        //     jobCount--;
+                        // }
+                    }
+                } else {
+                    kill(temp->pidList[0], SIGCONT);
+                    //setSignal(1);
+                    waitpid(temp->pidList[0],&status,WUNTRACED);
+                    if (!WIFSTOPPED(status)) {
+                        printf("\nDelele JOB!!\n");
+                        jobsDelNode(jobID);
+                        jobCount--;
+                    }
                 }
             } else { // without pipe
                 kill(temp->pidList[0], SIGCONT);

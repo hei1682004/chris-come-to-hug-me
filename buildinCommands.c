@@ -6,6 +6,7 @@ char *buildinCommandList[INPUT_BUFFER_SIZE] =
 		"exit",
 		"jobs",
 		"fg",
+		"bg",
 		NULL
 	};
 
@@ -37,7 +38,12 @@ int runBuildinCommands(Argument a){
 	}
 
 	else if(strcmp(a.argv[0], buildinCommandList[3]) == 0){
-		doFg(a);
+		doFg(a, 0);
+		return 1;
+	}
+
+	else if(strcmp(a.argv[0], buildinCommandList[4]) == 0){
+		doFg(a, 1);
 		return 1;
 	}
 
