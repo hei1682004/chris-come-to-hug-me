@@ -68,6 +68,8 @@ printf("final newString: <%s>\n", newString);
 	return newString;
 }*/
 
+
+//fuck github
 void trimString(char *string){
 	while(isspace(*string)) // trim space in string head
 		string++;
@@ -272,7 +274,7 @@ void runPipeCommand(Command c){
 				printf("%s\n", temp[j]);
 			}
 
-			if(execvp(temp, *temp)){
+			if(execvp(*temp, temp)){
 				if(errno == -2){
 					printf("%s: No such command or program\n", temp[0]);
 				}
