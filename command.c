@@ -69,12 +69,29 @@ printf("final newString: <%s>\n", newString);
 }*/
 
 
-//fuck github
-void trimString(char *string){
+char *trimString(char *string){
+	int i, j, isLast;
 	while(isspace(*string)) // trim space in string head
 		string++;
+
+	for(i=0; i<strlen(string); i++){
+		if(string[i] == ' '){
+			isLast = 1;
+			for(j=i+1; j<strlen(string); j++){
+				if(string[j] != ' ' && string[j] != '\n'){
+					isLast = 0;
+					break;
+				}
+			}
+			if(isLast){
+				string[i] = '\0';
+				break;
+			}
+		}
+	}
 	if(string[strlen(string) - 1] == '\n')
 		string[strlen(string) - 1] = '\0';
+	return string;
 }
 
 void setSignal(int mode){ // mode : 1=enable signals, 0=disable signals
@@ -154,7 +171,7 @@ Argument tokenizeArguments(char *input){
 
 //printf("tokenizeArguments\n================\n");
 
-	trimString(input);
+	input = trimString(input);
 	//printf("argument: %s\n", input);
 
 //getchar();

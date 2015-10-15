@@ -27,8 +27,8 @@ int main(int argc, char *argv[]){
 		char* inputBuffer = (char *) malloc(sizeof(char) * INPUT_BUFFER_SIZE);
 		printf("[3150 shell:%s]$ ", getCurrentDir());
 		fgets(inputBuffer, INPUT_BUFFER_SIZE, stdin);
-		trimString(inputBuffer);
-		//printf("result string: <%s>\n", inputBuffer);
+		inputBuffer = trimString(inputBuffer);
+		printf("result string: <%s>\n", inputBuffer);
 
 		Command c = tokenizeCommand(inputBuffer);
 		printCommand(c);

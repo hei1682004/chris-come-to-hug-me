@@ -31,7 +31,7 @@ typedef struct arg Argument;
 
 void printCommand(Command c);
 void printArgument(Argument a);
-void trimString(char *string);
+char *trimString(char *string);
 void setSignal(int mode);
 Command tokenizeCommand(char *input);
 Argument tokenizeArguments(char *input);
