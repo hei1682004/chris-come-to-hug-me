@@ -278,11 +278,15 @@ void suspendProcesses(pid_t *pidList, int count){
 void runPipeCommand(Command c){
 	int i, j;
 	pid_t childPid;
-	int fd[2];
-	int fd_in = 0;
+	int pipeCount = c.commandc - 1;
+	int fd[2 * pipeCount];
 	pid_t *pidList = (pid_t *) malloc(sizeof(pid_t) * c.commandc);
 
-	pipe(fd);
+	for(i=0; i<pipeCount; i++){
+		if(pipe(fd + i * 2) < 0){
+			printf("pipe error\n");
+		}
+	}
 
 	printCommand(c);
 
@@ -290,9 +294,6 @@ void runPipeCommand(Command c){
 		Argument a = c.commandv[i];
 		glob_t globBuffer;
 		int matchCount=0;
-		char **temp = malloc(sizeof(char*) * (a.argc + 1));
-		memcpy(temp, a.argv, (a.argc + 1)*sizeof(char*));
-
 
 		for(j = 0; j < a.argc; j++){
 			char *newArgv = a.argv[j];
@@ -303,42 +304,60 @@ void runPipeCommand(Command c){
 			matchCount = globBuffer.gl_pathc;
 		}
 
-		pidList[i] = childPid;
-		if(!(childPid = fork())){ // child
+		childPid = fork();
+
+		if(childPid == 0){
+
 			setSignal(1);
-			setenv("PATH", envPaths, 1);
 
-			dup2(fd_in, 0);
-			if(i < c.commandc - 1)
-				dup2(fd[1], 1);
-			close(fd[0]);
+			// not first command
+			if(i > 0){
+				if(dup2(fd[(i - 1) * 2], 0) < 0){
+					printf("dup2 error 1\n");
+					exit(0);
+				}
+			}
 
-			if(execvp(*globBuffer.gl_pathv, globBuffer.gl_pathv)){
-				if(errno == -2){
-					printf("%s: No such command or program\n", temp[0]);
+			// not last command
+			if(i < c.commandc - 1){
+				if(dup2(fd[i * 2 + 1], 1) < 0){
+					printf("dup2 error 2\n");
+					exit(0);
 				}
-				else{
-					printf("%s: unknown error\n", temp[0]);
-				}
+			}
+
+			for(j=0; j<2 * pipeCount; j++)
+				close(fd[j]);
+
+			if(execvp(*globBuffer.gl_pathv, globBuffer.gl_pathv) < 0){
+				printf("evecvp error\n");
 				exit(0);
 			}
 			globfree(&globBuffer);
 		}
-		else{ // parent
-			int status;
+		else if(childPid < 0){
+			printf("fork error\n");
+			exit(0);
+		}
+		else{
+			printf("parent!!!!\n");
 			pidList[i] = childPid;
-
-			close(fd[1]);
-			fd_in = fd[0];
-
+			int status;
 			waitpid(childPid, &status, WUNTRACED);
 			if(WIFSTOPPED(status)){
-	            printf("\n");
-							suspendProcesses(pidList, i+1);
-	            jobsNewNode(pidList, c.command);
-	            //kill(childPid,SIGSTOP);
-	            //waitpid(child_pid,&status,WUNTRACED);
-	        }
+		      printf("\n");
+					suspendProcesses(pidList, i+1);
+					for(j=0; j< sizeof(pidList)/sizeof(pidList[0]); j++)
+						printf("pid: %d\n", pidList[j]);
+		      jobsNewNode(pidList, c.command);
+		      //kill(childPid,SIGSTOP);
+		      //waitpid(child_pid,&status,WUNTRACED);
+		  }
 		}
 	}
+
+	// parent closes all fds
+	for(j=0; j< 2 * pipeCount; j++)
+		close(fd[j]);
+
 }
