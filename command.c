@@ -174,7 +174,7 @@ Argument tokenizeArguments(char *input){
 
 //getchar();
 
-	argv = (char **) malloc(sizeof(char*) * argc);
+	argv = (char **) malloc(sizeof(char*) * (argc + 1));
 
 	char *inputBackup = (char *) malloc(sizeof(char) * INPUT_BUFFER_SIZE);
 	for(i=0; i<INPUT_BUFFER_SIZE; i++)
@@ -193,6 +193,8 @@ Argument tokenizeArguments(char *input){
 		memcpy(argv[count++], token, strlen(token) * sizeof(char));
 		token = strtok(NULL, " ");
 	}
+
+	argv[count] = NULL;
 
 //getchar();
 
@@ -233,6 +235,8 @@ void wildcast(Command c){
 			//a.argv[k][strlen(a.argv[k])-1] = '\0';
 		}
 
+		a.argv[matchCount] = NULL;
+
 		a.argc = matchCount;
 
 		globfree(&globBuffer);
@@ -257,8 +261,8 @@ void runPipeCommand(Command c){
 
 	for(i=0; i<c.commandc; i++){
 		Argument a = c.commandv[i];
-		char **temp = malloc(sizeof(char*) * a.argc);
-		memcpy(temp, a.argv, a.argc*sizeof(char*));
+		char **temp = malloc(sizeof(char*) * (a.argc + 1));
+		memcpy(temp, a.argv, (a.argc + 1)*sizeof(char*));
 
 		pidList[i] = childPid;
 		if(!(childPid = fork())){ // child
@@ -269,10 +273,6 @@ void runPipeCommand(Command c){
 			if(i < c.commandc - 1)
 				dup2(fd[1], 1);
 			close(fd[0]);
-
-			for(j = 0; j < a.argc; j++){
-				printf("%s\n", temp[j]);
-			}
 
 			if(execvp(*temp, temp)){
 				if(errno == -2){
