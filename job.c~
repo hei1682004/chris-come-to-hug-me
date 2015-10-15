@@ -1,6 +1,6 @@
 #include "job.h"
 
-// job list sssss
+// job list s
 Jobs *head;
 int jobCount;
 
