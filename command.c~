@@ -68,8 +68,6 @@ printf("final newString: <%s>\n", newString);
 	return newString;
 }*/
 
-
-//fuck github
 void trimString(char *string){
 	while(isspace(*string)) // trim space in string head
 		string++;
