@@ -275,11 +275,24 @@ void suspendProcesses(pid_t *pidList, int count){
 		kill(pidList[j], SIGSTOP);
 }
 
+void handleErrno(int err, char *cmd){
+	printf("errno: %d\n", err);
+	if(err == ENOENT){
+		fprintf(stderr, "%s: No such command or program\n", cmd);
+	}
+	else{
+		fprintf(stderr, "%s: unknown error\n", cmd);
+	}
+	exit(0);
+}
+
 int runPipeCommand(Command c){
 	int i, j;
   pid_t pid;
   int in, fd [2];
 	pid_t *pidList = (pid_t *) malloc(sizeof(pid_t) * c.commandc);
+
+	setenv("PATH", envPaths, 1);
 
 	/* The first process should get its input from the original file descriptor 0.  */
   in = 0;
@@ -323,23 +336,22 @@ int runPipeCommand(Command c){
 			       }
 						 setSignal(1);
 			       execvp (*globBuffer.gl_pathv, globBuffer.gl_pathv);
+						 handleErrno(errno, globBuffer.gl_pathv[0]);
 			   }
 				 else{
 					 int status;
-					 //for(j=0; j<c.commandc; j++)
-					 //		printf("pidList[%d]: %d\n", j, pidList[j]);
 
 					 for(j=0; j< 2; j++)
 					  	close(fd[j]);
 
 					 for(j=0; j<c.commandc; j++){
 	 					  waitpid(pidList[j], &status, WUNTRACED);
-							printf("status: %d\n", status);
+							//printf("status: %d\n", status);
 						 if(WIFSTOPPED(status)){
 							  printf("\n");
 								printf("%d: WIFSTOPPED - suspended by signal\n", pid);
 								suspendProcesses(pidList, c.commandc);
-								printf("pidList:\n===========\n")
+								printf("pidList:\n===========\n");
 								for(j=0; j< c.commandc; j++)
 									printf("pid: %d\n", pidList[j]);
 					      jobsNewNode(pidList, c.command);
@@ -374,6 +386,7 @@ int executeCommand(int in, int out, char **argv){
 	pid_t pid;
 
   if ((pid = fork ()) == 0){
+		int value;
 		setSignal(1);
     if (in != 0){
       dup2 (in, 0);
@@ -385,7 +398,9 @@ int executeCommand(int in, int out, char **argv){
       close (out);
     }
 
-    return execvp (*argv, argv);
+    value = execvp (*argv, argv);
+		handleErrno(errno, argv[0]);
+		return value;
   }
 
   return pid;
