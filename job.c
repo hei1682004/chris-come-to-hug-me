@@ -19,10 +19,14 @@ void printJobList(){
         printf("No suspended jobs\n");
     }
     while(temp!=NULL){
-        printf("[%d] %s\n", ++count, temp->cmd);
+        if (temp->isSuspended == 1) {
+            printf("[%d] [Suspended] %s\n", ++count, temp->cmd);
+        } else {
+            printf("[%d] [Running] %s\n", ++count, temp->cmd);
+        }
         temp = temp->next;
     }
-    printf("job count : %d\n", jobCount);
+    //printf("job count : %d\n", jobCount);
 }
 
 
@@ -109,35 +113,55 @@ void doFg(Argument a, int FGorBG) {
                 for (i=0;i<tgtJob->pidCount;i++) {
                     kill(tgtJob->pidList[i], SIGCONT);
                 }
-                //wait all process
-                int jobDeleted = 0;
-                for (i=0;i<tgtJob->pidCount;i++) {
-                    waitpid(tgtJob->pidList[i],&status,WUNTRACED);
-                    if (!WIFSTOPPED(status)) {
-                        printf("\nDelele JOB!!\n");
-                        jobsDelNode(jobID);
-                        jobDeleted = 1;
+                if (FGorBG == 0) {
+                    //wait all process
+                    int jobDeleted = 0;
+                    for (i=0;i<tgtJob->pidCount;i++) {
+                        waitpid(tgtJob->pidList[i],&status,WUNTRACED);
+                        tgtJob->isSuspended = 1;
+                        if (!WIFSTOPPED(status)) {
+                            printf("\nDelele JOB!!\n");
+                            jobsDelNode(jobID);
+                            jobDeleted = 1;
+                        }
                     }
-                }
-                if (jobDeleted == 1) {
-                    jobCount--;
+                    if (jobDeleted == 1) {
+                        jobCount--;
+                    }
+                } else {
+                    tgtJob->isSuspended = 0;
                 }
             } else { // without pipe
                 kill(tgtJob->pidList[0], SIGCONT);
                 //setSignal(1);
-                waitpid(tgtJob->pidList[0],&status,WUNTRACED);
-                if (!WIFSTOPPED(status)) {
-                    printf("\nDelele JOB!!\n");
-                    jobsDelNode(jobID);
-                    jobCount--;
+                if (FGorBG == 0) {
+                    waitpid(tgtJob->pidList[0],&status,WUNTRACED);
+                    tgtJob->isSuspended = 1;
+                    if (!WIFSTOPPED(status)) {
+                        printf("\nDelele JOB!!\n");
+                        jobsDelNode(jobID);
+                        jobCount--;
+                    }
+                } else  {
+                    //kill(tgtJob->pidList[0], SIGTTIN);
+                    //kill(tgtJob->pidList[0], SIGTTOU);
+                    tgtJob->isSuspended = 0;
                 }
             }
         } else {
-            printf("fg: no such job\n");
+            if (FGorBG == 1) {
+                printf("bg: no such job\n");
+            } else {
+                printf("fg: no such job\n");
+            }
         }
     }
     else{
-        printf("fg: wrong number of arguments\n");
+        if (FGorBG == 1) {
+            printf("bg: wrong number of arguments\n");
+        } else {
+            printf("fg: wrong number of arguments\n");
+        }        
     }
 }
 
