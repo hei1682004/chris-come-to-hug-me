@@ -37,6 +37,7 @@ Command tokenizeCommand(char *input);
 Argument tokenizeArguments(char *input);
 //void wildcast(Command c);
 void suspendProcesses(pid_t *pidList, int count);
-void runPipeCommand(Command c);
+int runPipeCommand(Command c);
+int executeCommand(int in, int out, char **argv);
 
 #endif

@@ -28,10 +28,10 @@ int main(int argc, char *argv[]){
 		printf("[3150 shell:%s]$ ", getCurrentDir());
 		fgets(inputBuffer, INPUT_BUFFER_SIZE, stdin);
 		inputBuffer = trimString(inputBuffer);
-		printf("result string: <%s>\n", inputBuffer);
+		//printf("result string: <%s>\n", inputBuffer);
 
 		Command c = tokenizeCommand(inputBuffer);
-		printCommand(c);
+		//printCommand(c);
 
 		//printf("isBuildinCommand = %d\n", isBuildinCommand(c.commandv[0]));
 

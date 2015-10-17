@@ -1,8 +1,8 @@
 #include "buildinCommands.h"
 
-char *buildinCommandList[INPUT_BUFFER_SIZE] = 
+char *buildinCommandList[INPUT_BUFFER_SIZE] =
 	{	//ID: Row number - 5
-		"cd", 
+		"cd",
 		"exit",
 		"jobs",
 		"fg",
@@ -26,7 +26,7 @@ int runBuildinCommands(Argument a){
 		doCd(a);
 		return 1;
 	}
-	
+
 	else if(strcmp(a.argv[0], buildinCommandList[1]) == 0){
 		doExit(a);
 		return 1;

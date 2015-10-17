@@ -115,7 +115,7 @@ void setSignal(int mode){ // mode : 1=enable signals, 0=disable signals
 }
 
 Command tokenizeCommand(char *input){
-printf("tokenizeCommand\n=================\n");
+//printf("tokenizeCommand\n=================\n");
 	int i;
 	int commandc = 0;
 	Argument *commandv;
@@ -275,89 +275,118 @@ void suspendProcesses(pid_t *pidList, int count){
 		kill(pidList[j], SIGSTOP);
 }
 
-void runPipeCommand(Command c){
+int runPipeCommand(Command c){
 	int i, j;
-	pid_t childPid;
-	int pipeCount = c.commandc - 1;
-	int fd[2 * pipeCount];
+  pid_t pid;
+  int in, fd [2];
 	pid_t *pidList = (pid_t *) malloc(sizeof(pid_t) * c.commandc);
 
-	for(i=0; i<pipeCount; i++){
-		if(pipe(fd + i * 2) < 0){
-			printf("pipe error\n");
-		}
-	}
+	/* The first process should get its input from the original file descriptor 0.  */
+  in = 0;
 
-	printCommand(c);
+  /* Note the loop bound, we spawn here all, but the last stage of the pipeline.  */
+  for (i = 0; i < c.commandc; ++i)
+    {
+      pipe(fd);
 
-	for(i=0; i<c.commandc; i++){
-		Argument a = c.commandv[i];
-		glob_t globBuffer;
-		int matchCount=0;
+			Argument a = c.commandv[i];
 
-		for(j = 0; j < a.argc; j++){
-			char *newArgv = a.argv[j];
-			if(matchCount == 0)
-				glob(newArgv, GLOB_NOCHECK, NULL , &globBuffer );
-			else
-				glob(newArgv, GLOB_NOCHECK|GLOB_APPEND, NULL , &globBuffer );
-			matchCount = globBuffer.gl_pathc;
-		}
+			glob_t globBuffer;
+			int matchCount=0;
 
-		childPid = fork();
-
-		if(childPid == 0){
-
-			setSignal(1);
-
-			// not first command
-			if(i > 0){
-				if(dup2(fd[(i - 1) * 2], 0) < 0){
-					printf("dup2 error 1\n");
-					exit(0);
-				}
+			for(j = 0; j < a.argc; j++){
+				char *newArgv = a.argv[j];
+				if(matchCount == 0)
+					glob(newArgv, GLOB_NOCHECK, NULL , &globBuffer );
+				else
+					glob(newArgv, GLOB_NOCHECK|GLOB_APPEND, NULL , &globBuffer );
+				matchCount = globBuffer.gl_pathc;
 			}
 
-			// not last command
 			if(i < c.commandc - 1){
-				if(dup2(fd[i * 2 + 1], 1) < 0){
-					printf("dup2 error 2\n");
-					exit(0);
-				}
+	      /* f [1] is the write end of the pipe, we carry `in` from the prev iteration.  */
+	      pidList[i] = executeCommand(in, fd[1], globBuffer.gl_pathv);
+
+				/* No need for the write end of the pipe, the child will write here.  */
+	      close(fd[1]);
+
+	      /* Keep the read end of the pipe, the next child will read from there.  */
+	      in = fd[0];
+			}
+			else{
+				/* Last stage of the pipeline - set stdin be the read end of the previous pipe
+			     and output to the original file descriptor 1. */
+
+				 if ((pidList[i] = fork ()) == 0){
+			       if (in != 0){
+			           dup2 (in, 0);
+			       }
+						 setSignal(1);
+			       execvp (*globBuffer.gl_pathv, globBuffer.gl_pathv);
+			   }
+				 else{
+					 int status;
+					 //for(j=0; j<c.commandc; j++)
+					 //		printf("pidList[%d]: %d\n", j, pidList[j]);
+
+					 for(j=0; j< 2; j++)
+					  	close(fd[j]);
+
+					 for(j=0; j<c.commandc; j++){
+	 					  waitpid(pidList[j], &status, WUNTRACED);
+							printf("status: %d\n", status);
+						 if(WIFSTOPPED(status)){
+							  printf("\n");
+								printf("%d: WIFSTOPPED - suspended by signal\n", pid);
+								suspendProcesses(pidList, c.commandc);
+								printf("pidList:\n===========\n")
+								for(j=0; j< c.commandc; j++)
+									printf("pid: %d\n", pidList[j]);
+					      jobsNewNode(pidList, c.command);
+					      //kill(childPid,SIGSTOP);
+					      //waitpid(child_pid,&status,WUNTRACED);
+							}
+							else if(WIFSIGNALED(status)){
+								printf("\n");
+								printf("%d: WIFSIGNALED - terminated by signals\n", pid);
+							}
+							else if(WIFEXITED(status)){
+								printf("%d: WIFEXITED - terminated normally\n", pid);
+							}
+						}
+				 }
 			}
 
-			for(j=0; j<2 * pipeCount; j++)
-				close(fd[j]);
 
-			if(execvp(*globBuffer.gl_pathv, globBuffer.gl_pathv) < 0){
-				printf("evecvp error\n");
-				exit(0);
-			}
+
 			globfree(&globBuffer);
-		}
-		else if(childPid < 0){
-			printf("fork error\n");
-			exit(0);
-		}
-		else{
-			printf("parent!!!!\n");
-			pidList[i] = childPid;
-			int status;
-			waitpid(childPid, &status, WUNTRACED);
-			if(WIFSTOPPED(status)){
-		      printf("\n");
-					suspendProcesses(pidList, i+1);
-					for(j=0; j< sizeof(pidList)/sizeof(pidList[0]); j++)
-						printf("pid: %d\n", pidList[j]);
-		      jobsNewNode(pidList, c.command);
-		      //kill(childPid,SIGSTOP);
-		      //waitpid(child_pid,&status,WUNTRACED);
-		  }
-		}
-	}
+    }
 
-	// parent closes all fds
-	for(j=0; j< 2 * pipeCount; j++)
-		close(fd[j]);
+  //if (in != 0)
+  //  dup2 (in, 0);
 
+  /* Execute the last stage with the current process. */
+  //return execvp (*c.commandv[i].argv, c.commandv[i].argv);
+
+}
+
+int executeCommand(int in, int out, char **argv){
+	pid_t pid;
+
+  if ((pid = fork ()) == 0){
+		setSignal(1);
+    if (in != 0){
+      dup2 (in, 0);
+      close (in);
+    }
+
+    if (out != 1){
+      dup2 (out, 1);
+      close (out);
+    }
+
+    return execvp (*argv, argv);
+  }
+
+  return pid;
 }

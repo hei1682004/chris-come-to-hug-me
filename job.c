@@ -17,7 +17,7 @@ void printJobList(){
     temp = head;
     if (temp==NULL) {
         printf("No suspended jobs\n");
-    }   
+    }
     while(temp!=NULL){
         printf("[%d] %s\n", ++count, temp->cmd);
         temp = temp->next;
@@ -93,7 +93,7 @@ void doFg(Argument a, int FGorBG) {
     // FG = 0 , BG = 1
     if(a.argc == 2){
         int jobID, i;
-        Jobs *temp = head;  
+        Jobs *temp = head;
         sscanf(a.argv[1], "%d", &jobID);
         if (findJob(jobID) == 1) {
             for (i=0;i!=jobID-1;i++,temp=temp->next); //point to target job
@@ -103,29 +103,18 @@ void doFg(Argument a, int FGorBG) {
             int pidListSize = sizeof(temp->pidList)/sizeof(temp->pidList[0]); //get pidlist size
             printf("\npid list size : %d\n", pidListSize);
             if (pidListSize > 1) { // with pipe
-                if (temp->pidList[1] == 0) {
-                     //wake all process
-                    for (i=0;i<pidListSize;i++) {
-                        kill(temp->pidList[i], SIGCONT);
-                    }
-                    //wait all process
-                    for (i=0;i<pidListSize;i++) {
-                        waitpid(temp->pidList[i],&status,WUNTRACED);
-                        // if (!WIFSTOPPED(status)) {
-                        //     printf("\nDelele JOB!!\n");
-                        //     jobsDelNode(jobID);
-                        //     jobCount--;
-                        // }
-                    }
-                } else {
-                    kill(temp->pidList[0], SIGCONT);
-                    //setSignal(1);
-                    waitpid(temp->pidList[0],&status,WUNTRACED);
-                    if (!WIFSTOPPED(status)) {
-                        printf("\nDelele JOB!!\n");
-                        jobsDelNode(jobID);
-                        jobCount--;
-                    }
+                //wake all process
+                for (i=0;i<pidListSize;i++) {
+                    kill(temp->pidList[i], SIGCONT);
+                }
+                //wait all process
+                for (i=0;i<pidListSize;i++) {
+                    waitpid(temp->pidList[i],&status,WUNTRACED);
+                    // if (!WIFSTOPPED(status)) {
+                    //     printf("\nDelele JOB!!\n");
+                    //     jobsDelNode(jobID);
+                    //     jobCount--;
+                    // }
                 }
             } else { // without pipe
                 kill(temp->pidList[0], SIGCONT);
@@ -136,7 +125,7 @@ void doFg(Argument a, int FGorBG) {
                     jobsDelNode(jobID);
                     jobCount--;
                 }
-            }    
+            }
         } else {
             printf("fg: no such job\n");
         }
