@@ -22,16 +22,19 @@ void printJobList(){
         printf("[%d] %s\n", ++count, temp->cmd);
         temp = temp->next;
     }
+    printf("job count : %d\n", jobCount);
 }
 
 
-void jobsNewNode(pid_t *pidList, char *command){
+void jobsNewNode(pid_t *pidList, char *command, int commandc){
 
     char *cmd = command;
 
     jobCount++;
     Jobs *newJob = malloc(sizeof(Jobs));
     strcpy(newJob->cmd,cmd);
+    newJob->pidCount = commandc;
+    newJob->isSuspended = 1;
     newJob->pidList= pidList;
     newJob->next = NULL;
     //printf("%d\n", job->pidList);
@@ -93,33 +96,36 @@ void doFg(Argument a, int FGorBG) {
     // FG = 0 , BG = 1
     if(a.argc == 2){
         int jobID, i;
-        Jobs *temp = head;
+        Jobs *tgtJob = head;
         sscanf(a.argv[1], "%d", &jobID);
         if (findJob(jobID) == 1) {
-            for (i=0;i!=jobID-1;i++,temp=temp->next); //point to target job
+            for (i=0;i!=jobID-1;i++,tgtJob=tgtJob->next); //point to target job
             int status;
-            printf("Job wake up:  %s\n", temp->cmd);
-            //printf("----%d-----\n", temp->pidList[0]);
-            int pidListSize = sizeof(temp->pidList)/sizeof(temp->pidList[0]); //get pidlist size
-            printf("\npid list size : %d\n", pidListSize);
-            if (pidListSize > 1) { // with pipe
+            printf("Job wake up:  %s\n", tgtJob->cmd);
+            //printf("----%d-----\n", tgtJob->pidList[0]);
+            printf("\npid list size : %d\n", tgtJob->pidCount);
+            if (tgtJob->pidCount > 1) { // with pipe
                 //wake all process
-                for (i=0;i<pidListSize;i++) {
-                    kill(temp->pidList[i], SIGCONT);
+                for (i=0;i<tgtJob->pidCount;i++) {
+                    kill(tgtJob->pidList[i], SIGCONT);
                 }
                 //wait all process
-                for (i=0;i<pidListSize;i++) {
-                    waitpid(temp->pidList[i],&status,WUNTRACED);
-                    // if (!WIFSTOPPED(status)) {
-                    //     printf("\nDelele JOB!!\n");
-                    //     jobsDelNode(jobID);
-                    //     jobCount--;
-                    // }
+                int jobDeleted = 0;
+                for (i=0;i<tgtJob->pidCount;i++) {
+                    waitpid(tgtJob->pidList[i],&status,WUNTRACED);
+                    if (!WIFSTOPPED(status)) {
+                        printf("\nDelele JOB!!\n");
+                        jobsDelNode(jobID);
+                        jobDeleted = 1;
+                    }
+                }
+                if (jobDeleted == 1) {
+                    jobCount--;
                 }
             } else { // without pipe
-                kill(temp->pidList[0], SIGCONT);
+                kill(tgtJob->pidList[0], SIGCONT);
                 //setSignal(1);
-                waitpid(temp->pidList[0],&status,WUNTRACED);
+                waitpid(tgtJob->pidList[0],&status,WUNTRACED);
                 if (!WIFSTOPPED(status)) {
                     printf("\nDelele JOB!!\n");
                     jobsDelNode(jobID);

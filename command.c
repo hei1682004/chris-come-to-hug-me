@@ -354,7 +354,7 @@ int runPipeCommand(Command c){
 								printf("pidList:\n===========\n");
 								for(j=0; j< c.commandc; j++)
 									printf("pid: %d\n", pidList[j]);
-					      jobsNewNode(pidList, c.command);
+					      jobsNewNode(pidList, c.command, c.commandc);
 					      //kill(childPid,SIGSTOP);
 					      //waitpid(child_pid,&status,WUNTRACED);
 							}

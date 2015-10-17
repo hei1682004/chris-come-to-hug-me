@@ -15,6 +15,8 @@
 
 typedef struct jobs {
     char cmd[256];
+    int isSuspended;
+    int pidCount;
     pid_t *pidList;
     struct jobs *next;
 } Jobs;
@@ -22,7 +24,7 @@ typedef struct jobs {
 void doFg(Argument a, int FGorBG);
 void initJob();
 void printJobList();
-void jobsNewNode(pid_t *pidList, char *command);
+void jobsNewNode(pid_t *pidList, char *command, int commandc);
 void jobsDelNode(int jobID);
 int findJob(int jobID);
 int returnJobCount();
