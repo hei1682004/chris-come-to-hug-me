@@ -35,6 +35,9 @@ int main(int argc, char *argv[]){
 
 		//printf("isBuildinCommand = %d\n", isBuildinCommand(c.commandv[0]));
 
+		if(strlen(inputBuffer) == 0)
+			continue;
+
 		if(c.commandc == 1 && isBuildinCommand(c.commandv[0]))
 			runBuildinCommands(c.commandv[0]);
 		else{
