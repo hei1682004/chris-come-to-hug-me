@@ -121,11 +121,11 @@ void doFg(Argument a, int FGorBG) {
                         tgtJob->isSuspended = 1;
                         if (!WIFSTOPPED(status)) {
                             printf("\nDelele JOB!!\n");
-                            jobsDelNode(jobID);
                             jobDeleted = 1;
                         }
                     }
                     if (jobDeleted == 1) {
+                        jobsDelNode(jobID);
                         jobCount--;
                     }
                 } else {
