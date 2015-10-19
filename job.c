@@ -107,7 +107,7 @@ void doFg(Argument a, int FGorBG) {
             int status;
             printf("Job wake up:  %s\n", tgtJob->cmd);
             //printf("----%d-----\n", tgtJob->pidList[0]);
-            printf("\npid list size : %d\n", tgtJob->pidCount);
+            //printf("\npid list size : %d\n", tgtJob->pidCount);
             if (tgtJob->pidCount > 1) { // with pipe
                 //wake all process
                 for (i=0;i<tgtJob->pidCount;i++) {
@@ -120,7 +120,7 @@ void doFg(Argument a, int FGorBG) {
                         waitpid(tgtJob->pidList[i],&status,WUNTRACED);
                         tgtJob->isSuspended = 1;
                         if (!WIFSTOPPED(status)) {
-                            printf("\nDelele JOB!!\n");
+                            //printf("\nDelele JOB!!\n");
                             jobDeleted = 1;
                         }
                     }
@@ -128,6 +128,7 @@ void doFg(Argument a, int FGorBG) {
                         jobsDelNode(jobID);
                         jobCount--;
                     }
+                    printf("\n");
                 } else {
                     tgtJob->isSuspended = 0;
                 }
@@ -138,10 +139,11 @@ void doFg(Argument a, int FGorBG) {
                     waitpid(tgtJob->pidList[0],&status,WUNTRACED);
                     tgtJob->isSuspended = 1;
                     if (!WIFSTOPPED(status)) {
-                        printf("\nDelele JOB!!\n");
+                        //printf("\nDelele JOB!!\n");
                         jobsDelNode(jobID);
                         jobCount--;
                     }
+                    printf("\n");
                 } else  {
                     //kill(tgtJob->pidList[0], SIGTTIN);
                     //kill(tgtJob->pidList[0], SIGTTOU);
