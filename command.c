@@ -165,7 +165,7 @@ void suspendProcesses(pid_t *pidList, int count){
 }
 
 void handleErrno(int err, char *cmd){
-	printf("errno: %d\n", err);
+	//printf("errno: %d\n", err);
 	if(err == ENOENT){
 		fprintf(stderr, "%s: No such command or program\n", cmd);
 	}
