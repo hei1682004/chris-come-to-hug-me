@@ -35,7 +35,6 @@ char *trimString(char *string);
 void setSignal(int mode);
 Command tokenizeCommand(char *input);
 Argument tokenizeArguments(char *input);
-//void wildcast(Command c);
 void suspendProcesses(pid_t *pidList, int count);
 void handleExeErrno(int err, char *cmd);
 int runPipeCommand(Command c);

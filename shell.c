@@ -45,18 +45,7 @@ int main(int argc, char *argv[]){
 			runPipeCommand(c);
 		}
 
-		//free(c.command);
-		//free(c.commandv);
-
 		free(inputBuffer);
-
-		//--> No pipe commaand
-		//Argument a = tokenizeArguments(inputBuffer);
-		//printArgument(a);
-
-		//isRunBuildinCommand = runBuildinCommands(a);
-		//if(!isRunBuildinCommand)
-		//	runSystemCommand(a, inputBuffer);
 
 	}
 

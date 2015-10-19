@@ -21,7 +21,7 @@ typedef struct jobs {
     struct jobs *next;
 } Jobs;
 
-void doFg(Argument a, int FGorBG);
+void resumeJob(Argument a, int FGorBG);
 void initJob();
 void printJobList();
 void jobsNewNode(pid_t *pidList, char *command, int commandc);

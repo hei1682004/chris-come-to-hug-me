@@ -95,7 +95,7 @@ int findJob(int jobID) {
     return 0;
 }
 
-void doFg(Argument a, int FGorBG) {
+void resumeJob(Argument a, int FGorBG) {
     // FGorBG
     // FG = 0 , BG = 1
     if(a.argc == 2){
@@ -163,7 +163,7 @@ void doFg(Argument a, int FGorBG) {
             printf("bg: wrong number of arguments\n");
         } else {
             printf("fg: wrong number of arguments\n");
-        }        
+        }
     }
 }
 
